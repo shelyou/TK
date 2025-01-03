@@ -1,3 +1,6 @@
+import { db } from './firebase-config.js';
+import { doc, updateDoc } from "firebase/firestore";
+
 // Function to load JSON data dynamically from a file
 async function loadJsonData(file) {
     const response = await fetch(file);
@@ -58,30 +61,38 @@ function generateTableRows(data, tableId) {
 }
 
 // Edit Price function
-function editPrice(priceField, no, group) {
+async function editPrice(priceField, no, group) {
     const newPrice = prompt(`Enter new price for ${priceField.replace('_', ' ')}:`);
 
     if (newPrice && !isNaN(newPrice)) {
-        // Find the item and update the price
-        const item = jsonData[group].find(g => g.items.some(i => i.no === no)).items.find(i => i.no === no);
-        item[priceField] = parseInt(newPrice);
-
-        // Re-generate the table rows after the update
-        document.getElementById(group === 'Kue' ? 'kueBody' : 'plastikBody').innerHTML = '';
-        generateTableRows(jsonData[group], group === 'Kue' ? 'kueBody' : 'plastikBody');
+        const itemId = `${group.toLowerCase()}_${no}`;
+        await savePriceToFirestore(group, itemId, priceField, parseInt(newPrice));
+        alert("Price updated!");
     } else {
         alert("Invalid price input.");
     }
 }
 
-// Loading and populating the data for both tables
+// Save updated price to Firestore
+async function savePriceToFirestore(group, itemId, priceField, newPrice) {
+    const collectionName = group === "Plastik" ? "plastik" : "kue";
+    const docRef = doc(db, collectionName, itemId);
+
+    try {
+        await updateDoc(docRef, { [priceField]: newPrice });
+        console.log(`Updated ${priceField} for ${itemId}`);
+    } catch (error) {
+        console.error("Error saving data to Firestore:", error);
+    }
+}
+
+// Initialize tables
 async function populateTables() {
-    const kueData = await loadJsonData('c/k.json');
-    const plastikData = await loadJsonData('c/p.json');
+    const kueData = await loadJsonData('k.json');
+    const plastikData = await loadJsonData('p.json');
 
     generateTableRows(kueData.Kue, "kueBody");
     generateTableRows(plastikData.Plastik, "plastikBody");
 }
 
-// Initialize tables
 populateTables();
