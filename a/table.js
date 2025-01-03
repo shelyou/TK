@@ -1,8 +1,13 @@
-import { editPrice } from './supabase.js';
-// Function to load JSON data dynamically from a file
+// Function to load JSON data dynamically from a file or localStorage
 async function loadJsonData(file) {
-    const response = await fetch(file);
-    const data = await response.json();
+    let data;
+    if (localStorage.getItem(file)) {
+        data = JSON.parse(localStorage.getItem(file));  // Load from localStorage if available
+    } else {
+        const response = await fetch(file);
+        data = await response.json();
+        localStorage.setItem(file, JSON.stringify(data)); // Save the fetched data to localStorage
+    }
     return data;
 }
 
@@ -56,6 +61,26 @@ function generateTableRows(data, tableId) {
             tbody.appendChild(row);
         });
     });
+}
+
+// Edit Price function
+function editPrice(priceField, no, group) {
+    const newPrice = prompt(`Enter new price for ${priceField.replace('_', ' ')}:`);
+
+    if (newPrice && !isNaN(newPrice)) {
+        // Find the item and update the price
+        const item = jsonData[group].find(g => g.items.some(i => i.no === no)).items.find(i => i.no === no);
+        item[priceField] = parseInt(newPrice);
+
+        // Save the updated data to localStorage
+        localStorage.setItem(group === 'Kue' ? 'k.json' : 'p.json', JSON.stringify(jsonData[group]));
+
+        // Re-generate the table rows after the update
+        document.getElementById(group === 'Kue' ? 'kueBody' : 'plastikBody').innerHTML = '';
+        generateTableRows(jsonData[group], group === 'Kue' ? 'kueBody' : 'plastikBody');
+    } else {
+        alert("Invalid price input.");
+    }
 }
 
 // Loading and populating the data for both tables
