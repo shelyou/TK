@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-const PORT = 8080;
+const PORT = 8000;
 
 // Middleware untuk parsing JSON
 app.use(express.json());
