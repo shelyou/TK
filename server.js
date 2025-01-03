@@ -23,7 +23,7 @@ app.post('/updatePrice', (req, res) => {
     const { group, itemNo, priceField, newPrice } = req.body;
 
     // Determine file path based on group
-    const filePath = group === 'Kue' ? 'kue.json' : 'plastik.json';
+    const filePath = group === 'Kue' ? 'c/k.json' : 'c/p.json';
     
     // Read the existing data from the appropriate JSON file
     fs.readFile(filePath, 'utf8', (err, data) => {
