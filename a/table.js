@@ -1,3 +1,4 @@
+import { editPrice } from './supabase.js';
 // Function to load JSON data dynamically from a file
 async function loadJsonData(file) {
     const response = await fetch(file);
