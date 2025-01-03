@@ -1,21 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
-// Supabase Client
-const { createClient } = supabase;
 
+// Supabase Client
 const supabaseUrl = 'https://zawkghhxfdlhilzpqyah.supabase.co'; // URL Supabase Anda
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inphd2tnaGh4ZmRsaGlsenBxeWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MDc2MjAsImV4cCI6MjA1MTQ4MzYyMH0.P3fXK_8clo1SjeRtRkcekID9vPrO2eqzjfQJOQtg8Z0';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Data lokal untuk menyimpan JSON yang diubah
+let jsonData = {};
 
 // Function to load JSON data dynamically from a file
 async function loadJsonData(file) {
     const response = await fetch(file);
     const data = await response.json();
     return data;
-} 
+}
 
 // Function to generate table rows dynamically
 function generateTableRows(data, tableId) {
     const tbody = document.getElementById(tableId);
+    tbody.innerHTML = ''; // Clear previous table content
+
     data.forEach(group => {
         // Group Header
         const groupRow = document.createElement("tr");
@@ -67,12 +71,12 @@ function generateTableRows(data, tableId) {
 
 // Function to update price in Supabase
 async function updatePriceInSupabase(group, no, priceField, newPrice) {
-    let tableName = group === 'Kue' ? 'kue_table' : 'plastik_table'; // Ganti dengan nama tabel yang sesuai di Supabase
+    let tableName = group === 'Kue' ? 'kue_table' : 'plastik_table';
 
     const { data, error } = await supabase
         .from(tableName)
-        .update({ [priceField]: newPrice }) // Update kolom harga
-        .eq('no', no); // Update berdasarkan nomor item
+        .update({ [priceField]: newPrice })
+        .eq('no', no);
 
     if (error) {
         console.error('Error updating price in Supabase:', error);
@@ -87,15 +91,15 @@ async function editPrice(priceField, no, group) {
     const newPrice = prompt(`Enter new price for ${priceField.replace('_', ' ')}:`);
 
     if (newPrice && !isNaN(newPrice)) {
-        // Find the item and update the price
-        const item = jsonData[group].find(g => g.items.some(i => i.no === no)).items.find(i => i.no === no);
+        // Update local data
+        const groupData = jsonData[group].find(g => g.items.some(i => i.no === no));
+        const item = groupData.items.find(i => i.no === no);
         item[priceField] = parseInt(newPrice);
 
         // Update in Supabase
         await updatePriceInSupabase(group, no, priceField, parseInt(newPrice));
 
-        // Re-generate the table rows after the update
-        document.getElementById(group === 'Kue' ? 'kueBody' : 'plastikBody').innerHTML = '';
+        // Re-generate the table rows with updated data
         generateTableRows(jsonData[group], group === 'Kue' ? 'kueBody' : 'plastikBody');
     } else {
         alert("Invalid price input.");
@@ -107,8 +111,13 @@ async function populateTables() {
     const kueData = await loadJsonData('k.json');
     const plastikData = await loadJsonData('p.json');
 
-    generateTableRows(kueData.Kue, "kueBody");
-    generateTableRows(plastikData.Plastik, "plastikBody");
+    jsonData = {
+        Kue: [{ group: 'Kue', items: kueData }],
+        Plastik: [{ group: 'Plastik', items: plastikData }]
+    };
+
+    generateTableRows(jsonData.Kue, "kueBody");
+    generateTableRows(jsonData.Plastik, "plastikBody");
 }
 
 // Initialize tables
