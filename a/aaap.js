@@ -76,8 +76,8 @@ function editPrice(priceField, no, group) {
 
 // Loading and populating the data for both tables
 async function populateTables() {
-    const kueData = await loadJsonData('k.json');
-    const plastikData = await loadJsonData('p.json');
+    const kueData = await loadJsonData('c/k.json');
+    const plastikData = await loadJsonData('c/p.json');
 
     generateTableRows(kueData.Kue, "kueBody");
     generateTableRows(plastikData.Plastik, "plastikBody");
