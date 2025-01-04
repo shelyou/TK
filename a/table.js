@@ -1,3 +1,8 @@
+let jsonData = {
+    Kue: [],
+    Plastik: []
+};
+
 // Function to load JSON data dynamically from a file or localStorage
 async function loadJsonData(file) {
     let data;
@@ -14,6 +19,7 @@ async function loadJsonData(file) {
 // Function to generate table rows dynamically
 function generateTableRows(data, tableId) {
     const tbody = document.getElementById(tableId);
+    tbody.innerHTML = ''; // Clear previous table rows
     data.forEach(group => {
         // Group Header
         const groupRow = document.createElement("tr");
@@ -69,15 +75,21 @@ function editPrice(priceField, no, group) {
 
     if (newPrice && !isNaN(newPrice)) {
         // Find the item and update the price
-        const item = jsonData[group].find(g => g.items.some(i => i.no === no)).items.find(i => i.no === no);
-        item[priceField] = parseInt(newPrice);
+        const groupData = jsonData[group];
+        const item = groupData.find(g => g.items.some(i => i.no === no)).items.find(i => i.no === no);
+        
+        if (item) {
+            item[priceField] = parseInt(newPrice);
 
-        // Save the updated data to localStorage
-        localStorage.setItem(group === 'Kue' ? 'k.json' : 'p.json', JSON.stringify(jsonData[group]));
+            // Save the updated data to localStorage
+            localStorage.setItem(group === 'Kue' ? 'k.json' : 'p.json', JSON.stringify(groupData));
 
-        // Re-generate the table rows after the update
-        document.getElementById(group === 'Kue' ? 'kueBody' : 'plastikBody').innerHTML = '';
-        generateTableRows(jsonData[group], group === 'Kue' ? 'kueBody' : 'plastikBody');
+            // Re-generate the table rows after the update
+            document.getElementById(group === 'Kue' ? 'kueBody' : 'plastikBody').innerHTML = '';
+            generateTableRows(groupData, group === 'Kue' ? 'kueBody' : 'plastikBody');
+        } else {
+            alert("Item not found.");
+        }
     } else {
         alert("Invalid price input.");
     }
@@ -85,11 +97,11 @@ function editPrice(priceField, no, group) {
 
 // Loading and populating the data for both tables
 async function populateTables() {
-    const kueData = await loadJsonData('k.json');
-    const plastikData = await loadJsonData('p.json');
+    jsonData.Kue = await loadJsonData('k.json');
+    jsonData.Plastik = await loadJsonData('p.json');
 
-    generateTableRows(kueData.Kue, "kueBody");
-    generateTableRows(plastikData.Plastik, "plastikBody");
+    generateTableRows(jsonData.Kue, "kueBody");
+    generateTableRows(jsonData.Plastik, "plastikBody");
 }
 
 // Initialize tables
